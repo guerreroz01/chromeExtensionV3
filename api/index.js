@@ -91,6 +91,7 @@ const chatCompletion = async (msn) => {
   const configuration = new Configuration({
     apiKey: process.env.API_KEY,
   });
+
   const openai = new OpenAIApi(configuration);
   try {
     const response = await openai.createChatCompletion({
@@ -99,7 +100,10 @@ const chatCompletion = async (msn) => {
       max_tokens: 3000,
     });
 
-    const summary = response.data.choices[0].message.content;
+    const summary = response.data.choices[0].message.content.replace(
+      /(?:\r\n|\r|\n)/g,
+      "<br>"
+    );
     chat.push({
       role: "assistant",
       content: `${summary}`,

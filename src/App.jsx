@@ -13,23 +13,28 @@ const getActiveTabUrl = async () => {
 };
 
 function App() {
-  const [dataResponse, setDataResponse] = useState("");
-  const [isLoading, setIsLoading] = useState(null);
-  const [localData, setLocalData] = useState("");
   const [tab, setTab] = useState(1);
+  const [isLoading, setIsLoading] = useState(null);
+  const [dataResponse, setDataResponse] = useState("");
   const [inputValue, setInputValue] = useState("");
-  const [chatResponse, setChatResponse] = useState("")
+  const [chatResponse, setChatResponse] = useState("");
 
   useEffect(() => {
     const savedDataString = localStorage.getItem("apiResponse");
+    const savedChatString = localStorage.getItem("chatResponse");
     if (savedDataString) {
       const savedData = JSON.parse(savedDataString);
-      setLocalData(savedData.response);
+      const dataReplaced = savedData.response.replace(/&lt;br&gt;/g, "<br>");
+      setDataResponse(dataReplaced);
     }
-  }, [localData]);
+    if (savedChatString) {
+      const savedData = JSON.parse(savedChatString);
+      const dataReplaced = savedData.response.replace(/&lt;br&gt;/g, "<br>");
+      setChatResponse(dataReplaced);
+    }
+  }, []);
 
   const getData = async (url, API_URL, chat) => {
-    console.log(url);
     try {
       const response = await fetch(API_URL, {
         method: "POST",
@@ -40,7 +45,13 @@ function App() {
       });
       const data = await response.json();
       if (chat) {
-        setChatResponse(data.summary)
+        setChatResponse(data.summary);
+        const chatToSave = {
+          url: url,
+          response: data.summary,
+        };
+        const dataString = JSON.stringify(chatToSave);
+        localStorage.setItem("chatResponse", dataString);
       } else {
         setDataResponse(data.summary);
         const dataToSave = {
@@ -70,8 +81,8 @@ function App() {
 
     const api_url = "http://localhost:5000/chat";
     setIsLoading(true);
+    localStorage.removeItem("chatResponse");
     await getData(inputValue, api_url, true);
-    //    setInputValue("")
     setIsLoading(false);
   };
   const handleChange = (e) => {
@@ -84,41 +95,22 @@ function App() {
         <div className="flex gap-8 justify-center items-center">
           <h2
             onClick={() => setTab(1)}
-            className={`${tab === 1 ? "border-b-4 border-indigo-500" : ""
-              } font-semibold uppercase py-6 px-4 cursor-pointer`}
-          >
-            Extractor
-          </h2>
-          <h2
-            onClick={() => setTab(2)}
-            className={`${tab === 2 ? "border-b-4 border-indigo-500" : ""
-              } font-semibold uppercase py-6 px-4 cursor-pointer`}
+            className={`${
+              tab === 1 ? "border-b-4 border-indigo-500" : ""
+            } font-semibold uppercase py-6 px-4 cursor-pointer`}
           >
             Chat GPT
           </h2>
+          <h2
+            onClick={() => setTab(2)}
+            className={`${
+              tab === 2 ? "border-b-4 border-indigo-500" : ""
+            } font-semibold uppercase py-6 px-4 cursor-pointer`}
+          >
+            Extractor
+          </h2>
         </div>
         {tab === 1 ? (
-          <div className="w-full" id="componente-resumidor">
-            <div
-              className="mt-auto h-[390px] w-full bg-gray-800 rounded-lg p-4 text-lg overflow-y-scroll
-         scrollbar-none"
-            >
-              {isLoading === true ? (
-                <div className="text-center mt-40">Loading</div>
-              ) : (
-                localData || dataResponse
-              )}
-            </div>
-            <div className="py-6 flex justify-center">
-              <button
-                className="px-6 py-4 bg-pink-700 rounded-full uppercase font-semibold"
-                onClick={handleClick}
-              >
-                Resumir pagina actual
-              </button>
-            </div>
-          </div>
-        ) : (
           <div className="w-full" id="componente-Chat">
             <div
               className="mt-auto h-[350px] w-full bg-gray-800 rounded-lg p-4 text-lg overflow-y-scroll
@@ -126,8 +118,19 @@ function App() {
             >
               {isLoading === true ? (
                 <div className="text-center mt-40">Loading</div>
-              ) : (chatResponse && (
-                <p><strong className="text-semibold">{inputValue} <br /></strong>{chatResponse}</p>)
+              ) : (
+                chatResponse && (
+                  <p>
+                    <strong className="text-semibold pb-2">
+                      {inputValue} <br />
+                    </strong>
+                    <p
+                      dangerouslySetInnerHTML={{
+                        __html: chatResponse,
+                      }}
+                    ></p>
+                  </p>
+                )
               )}
             </div>
             <form onSubmit={handleSubmit}>
@@ -145,6 +148,31 @@ function App() {
                 </button>
               </div>
             </form>
+          </div>
+        ) : (
+          <div className="w-full" id="componente-resumidor">
+            <div
+              className="mt-auto h-[390px] w-full bg-gray-800 rounded-lg p-4 text-lg overflow-y-scroll
+         scrollbar-none"
+            >
+              {isLoading === true ? (
+                <div className="text-center mt-40">Loading</div>
+              ) : (
+                <p
+                  dangerouslySetInnerHTML={{
+                    __html: dataResponse,
+                  }}
+                ></p>
+              )}
+            </div>
+            <div className="py-6 flex justify-center">
+              <button
+                className="px-6 py-4 bg-pink-700 rounded-full uppercase font-semibold"
+                onClick={handleClick}
+              >
+                Resumir pagina actual
+              </button>
+            </div>
           </div>
         )}
       </div>
