@@ -69,7 +69,7 @@ function App() {
   };
   const handleClick = async () => {
     const myUrl = await getActiveTabUrl();
-    const api_url = "http://localhost:5000/summarize";
+    const api_url = "http://139.144.173.144:3000/summarize";
     setIsLoading(true);
     localStorage.removeItem("apiResponse");
     await getData(myUrl, api_url, false);
@@ -79,7 +79,7 @@ function App() {
     e.preventDefault();
     e.target[0].value = "";
 
-    const api_url = "http://localhost:5000/chat";
+    const api_url = "http://139.144.173.144:3000/chat";
     setIsLoading(true);
     localStorage.removeItem("chatResponse");
     await getData(inputValue, api_url, true);
